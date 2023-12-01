@@ -1,0 +1,289 @@
+openapi: 3.0.0
+info:
+  title: Snort Log API
+  description: >-
+    This is API for logging events from Snort3 IPS and IDS. It also provide logging
+    of user's requests.
+  version: 0.0.1
+servers:
+  - url: https://{ip}:{port}/api/v1
+    description: Development server
+    variables:
+      port:
+        default: '8000'
+      ip:
+        default: 0.0.0.0
+components:
+  schemas:
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        SID:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: timestamp
+        source_ip:
+          type: string
+        source_port:
+          type: integer
+          format: int64
+        destination_ip:
+          type: string
+        destination_port:
+          type: integer
+          format: int64
+        protocol:
+          type: string
+        action:
+          type: string
+          enum:
+            - allow
+            - alert
+            - block
+            - drop
+            - log
+            - pass
+        message:
+          type: string
+      example:
+        id: 3895
+        sid: 254
+        timestamp: 2017-07-06T19:07:59.418327Z
+        src_addr: 192.168.10.3
+        src_port: 53
+        dst_addr: 192.168.10.5
+        dst_port: 49544
+        proto: UDP
+        action: allow
+        msg: PROTOCOL-DNS SPOOF query response with TTL of 1 min. and no authority
+          
+    EventCountSid:
+      type: object
+      properties:
+        sid:
+          type: integer
+        count:
+          type: integer
+          
+    EventCountAddr:
+      type: object
+      properties:
+        src_addr:
+          type: string
+        dst_addr:
+          type: string
+        count:
+          type: integer
+          
+    Request:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userip:
+          type: string
+          format: int64
+        http_method:
+          type: string
+          example: GET
+        timestamp:
+          type: string
+          format: timestamp
+        data:
+          type: string
+          format: json
+          description: Data used in requests
+      example:
+        id: 12
+        timestamp: 2023-11-30 12:15:29.530 +0200
+        userip: 127.0.0.1
+        http_method: GET
+        request_data:
+          endpoint: /events
+          period_start: 2023-11-30 12:15:29.530 +0200
+          period_end: 2023-11-30 12:15:29.530 +0200
+          sid: 10001
+          source_ip: 127.0.0.2
+          source_port: 80
+          destination_ip: 127.0.0.1 
+          destination_port: 80
+          protocol: udp
+          type: sid
+          
+    BadRequest:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: The request is malformed or invalid.
+          
+    SuccessfullyDeleted:
+      type: object
+      properties:
+        message:
+          type: string
+          example: All events are marked as deleted.
+tags:
+  - name: event
+    description: Everything about Event
+  - name: request
+    description: Everything about Request
+paths:
+  /events:
+    get:
+      tags:
+        - event
+      description: Filter events
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+      parameters:
+        - in: query
+          name: source_ip
+          schema:
+            type: string
+        - in: query
+          name: source_port
+          schema:
+            type: integer
+        - in: query
+          name: dest_ip
+          schema:
+            type: string
+        - in: query
+          name: dest_port
+          schema:
+            type: integer
+        - name: sid
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: protocol
+          in: query
+          schema:
+            type: string
+            
+    patch:
+      tags:
+        - event
+      description: >-
+        Mark all entries in the database as deleted to exclude them from future 
+        request results.
+      responses:
+        '200':
+          description: Successfully Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessfullyDeleted'
+  
+  /events/count:
+    get:
+      tags:
+        - event
+      description: >-
+        Collect count of occurring events by concrete period using sid or addresses
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/EventCountSid'
+                    - $ref: '#/components/schemas/EventCountAddr'
+              examples:
+                by_sid:
+                  value:
+                    - sid: 254
+                      count: 7349
+                by_addr:
+                  value:
+                    - src_addr: 192.168.10.3
+                      dst_addr: 192.168.10.9
+                      count: 1485
+
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - last_day
+              - last_week
+              - last_month
+            default: all
+        - name: type
+          in: query
+          description: Type of count (sid or addr)
+          schema:
+            type: string
+            default: sid
+            enum:
+              - sid
+              - addr
+
+  /requests-log:
+    get:
+      tags:
+        - request
+      description: >-
+        Filter user's requests by time period between two timestamps(should be less
+        then week)
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Request'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+      parameters:
+        - in: query
+          name: period_start
+          schema:
+            type: string
+            format: timestamp
+        - in: query
+          name: period_stop
+          schema:
+            type: string
+            format: timestamp
