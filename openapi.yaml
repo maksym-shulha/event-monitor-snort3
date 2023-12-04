@@ -163,27 +163,33 @@ paths:
           name: source_ip
           schema:
             type: string
+          required: false
         - in: query
           name: source_port
           schema:
             type: integer
+          required: false
         - in: query
           name: dest_ip
           schema:
             type: string
+          required: false
         - in: query
           name: dest_port
           schema:
             type: integer
+          required: false
         - name: sid
           in: query
           schema:
             type: integer
             format: int64
+          required: false
         - name: protocol
           in: query
           schema:
             type: string
+          required: false
             
     patch:
       tags:
@@ -244,6 +250,7 @@ paths:
               - last_week
               - last_month
             default: all
+          required: false
         - name: type
           in: query
           description: Type of count (sid or addr)
@@ -253,6 +260,7 @@ paths:
             enum:
               - sid
               - addr
+          required: true
 
   /requests-log:
     get:
@@ -282,8 +290,10 @@ paths:
           schema:
             type: string
             format: timestamp
+          required: true
         - in: query
           name: period_stop
           schema:
             type: string
             format: timestamp
+          required: true
