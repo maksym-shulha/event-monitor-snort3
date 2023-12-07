@@ -16,7 +16,8 @@ class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = ('id', 'timestamp', 'sid', 'action', 'src_addr', 'src_port', 'dst_addr', 'dst_port', 'proto', 'message')
+        fields = ('id', 'timestamp', 'sid', 'action', 'src_addr',
+                  'src_port', 'dst_addr', 'dst_port', 'proto', 'message')
 
     @staticmethod
     def get_sid(obj):
