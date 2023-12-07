@@ -12,8 +12,7 @@ from monitor.models import Event
 
 
 class OnMyWatch:
-    # watchDirectory = r'/var/log/snort/'
-    watchDirectory = r'C:\Users\Kaya\Desktop\TaskLPS\event-monitor-snort3\snort3_monitor'
+    watchDirectory = '/var/log/snort/'
 
     def __init__(self):
         self.observer = Observer()
