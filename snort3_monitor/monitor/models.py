@@ -47,3 +47,10 @@ class Rule(models.Model):
         """Checking for existing of concrete rule"""
         rule = get_object_or_404(Rule, sid=sid, rev=rev)
         return rule
+
+
+class Request(models.Model):
+    user_addr = models.CharField(max_length=20)
+    http_method = models.CharField(max_length=20)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    data = models.JSONField()
