@@ -3,7 +3,6 @@ from rest_framework import serializers
 from .models import Event, Rule
 
 
-
 class RuleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rule
@@ -19,12 +18,14 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = ('id', 'timestamp', 'sid', 'action', 'src_addr', 'src_port', 'dst_addr', 'dst_port', 'proto', 'message')
 
-   
-    def get_sid(self, obj: Event) -> str:
+    @staticmethod
+    def get_sid(obj):
         return obj.rule.sid
 
-    def get_action(self, obj: Event) -> str:
+    @staticmethod
+    def get_action(obj):
         return obj.rule.action
 
-    def get_message(self, obj: Event) -> str:
+    @staticmethod
+    def get_message(obj):
         return obj.rule.message
