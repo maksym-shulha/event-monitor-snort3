@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 
 from django.db import models
 from django.shortcuts import get_object_or_404
@@ -16,7 +16,8 @@ class Event(models.Model):
     mark_as_deleted = models.BooleanField(default=False)
 
     @staticmethod
-    def create_from_watcher(data: str) -> None:
+    def create_from_watcher(data: list) -> None:
+        """method for processing data from watcher script"""
         for line in data:
             try:
                 event_data = json.loads(line)
@@ -43,5 +44,6 @@ class Rule(models.Model):
 
     @staticmethod
     def get_by_sid_and_rev(sid: int, rev: int) -> 'Rule':
+        """Checking for existing of concrete rule"""
         rule = get_object_or_404(Rule, sid=sid, rev=rev)
         return rule
