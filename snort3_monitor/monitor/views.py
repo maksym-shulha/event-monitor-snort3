@@ -5,12 +5,13 @@ from django.db.models.functions import Concat
 from django.http import HttpResponseNotFound
 from django.db.models import F
 from django.db.models.query import QuerySet
+from django.utils.timezone import make_aware, utc
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from .models import Event
-from .serializers import EventSerializer, EventCountAddressSerializer, EventCountRuleSerializer
+from .models import Event, Request
+from .serializers import EventSerializer, EventCountAddressSerializer, EventCountRuleSerializer, RequestSerializer
 
 
 class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
@@ -45,6 +46,36 @@ class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
         queryset = self.get_queryset()
         queryset.update(mark_as_deleted=True)
         return Response({"message": "All events are marked as deleted."})
+
+
+class RequestList(generics.ListAPIView):
+    queryset = Request.objects.all()
+    serializer_class = RequestSerializer
+
+    def get_queryset(self) -> QuerySet:
+        queryset = super().get_queryset()
+
+        # checks if all params are included
+        period_start = self.request.query_params.get('period_start')
+        period_stop = self.request.query_params.get('period_stop')
+        if not (period_start and period_stop):
+            raise ValidationError({"error": "You should define 'period_start' and 'period_stop' in format DD-MM-YY"})
+
+        # checks if params are proper
+        try:
+            period_start = datetime.strptime(period_start, "%d-%m-%y")
+            period_start = make_aware(period_start, utc)
+            period_stop = datetime.strptime(period_stop, "%d-%m-%y") + timedelta(days=1)
+            period_stop = make_aware(period_stop, utc)
+        except ValueError:
+            raise ValidationError({"error": "Use format DD-MM-YY"})
+
+        # checks if period is less than week
+        if period_stop - period_start > timedelta(days=7):
+            raise ValidationError({"error": "The range has to be less than a week"})
+
+        queryset = queryset.filter(timestamp__gte=period_start, timestamp__lte=period_stop)
+        return queryset
 
 
 class EventCountList(generics.ListAPIView):
