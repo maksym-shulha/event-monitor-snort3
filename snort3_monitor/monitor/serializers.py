@@ -30,3 +30,13 @@ class EventSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_message(obj):
         return obj.rule.message
+
+
+class EventCountAddressSerializer(serializers.Serializer):
+    addr_pair = serializers.CharField(max_length=128)
+    count = serializers.IntegerField()
+
+
+class EventCountRuleSerializer(serializers.Serializer):
+    sid = serializers.CharField(max_length=128)
+    count = serializers.IntegerField()
