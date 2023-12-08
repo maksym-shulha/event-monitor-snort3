@@ -6,7 +6,7 @@ from .models import Event, Rule, Request
 class RuleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rule
-        fields = ('sid', 'rev', 'action', 'message')
+        fields = ('sid', 'rev', 'gid', 'action', 'message')
 
 
 class RequestSerializer(serializers.ModelSerializer):
