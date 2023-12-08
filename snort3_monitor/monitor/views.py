@@ -6,10 +6,12 @@ from django.http import HttpResponseNotFound
 from django.db.models import F
 from django.db.models.query import QuerySet
 from django.utils.timezone import make_aware, utc
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from script_rules import update_pulled_pork
 from .models import Event, Request
 from .serializers import EventSerializer, EventCountAddressSerializer, EventCountRuleSerializer, RequestSerializer
 
@@ -119,6 +121,13 @@ class EventCountList(generics.ListAPIView):
                 {"error": "Unknown 'type', use 'sid' or 'addr'"})
 
         return queryset
+
+
+class RuleCreate(APIView):
+    def post(self, request, *args, **kwargs) -> Response:
+        """POST method, but uses script for checking changes in pulledpork3 rules"""
+        count = update_pulled_pork('rules.txt')
+        return Response({'message': f'{count} rules has been added'}, status=status.HTTP_201_CREATED)
 
 
 def error404(request, exception):
