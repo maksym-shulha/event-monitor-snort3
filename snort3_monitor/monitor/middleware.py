@@ -9,4 +9,4 @@ class RequestMiddleware(MiddlewareMixin):
         ip = request.META.get('REMOTE_ADDR', '')
         method = request.method
         filters = request.GET.dict()
-        Request.objects.create(user_addr=ip, http_method=method, data=filters)
+        Request.objects.create(user_addr=ip, http_method=method, request_data=filters)

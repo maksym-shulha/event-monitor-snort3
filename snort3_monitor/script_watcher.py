@@ -62,7 +62,7 @@ class Handler(FileSystemEventHandler):
     def read_data(event) -> None:
         """open file with changes and send it into a model"""
         try:
-            with open(event.src_path, 'r') as file:
+            with open(event.src_path, encoding='latin-1') as file:
                 file.seek(Handler.current_position)
                 new_data = file.readlines()
                 if new_data:

@@ -25,7 +25,7 @@ def update_pulled_pork(file: str) -> int:
     if exit_code != 0:
         raise RuntimeError('Dump was not executed')
 
-    with open(file, encoding="utf8", errors='ignore') as f:
+    with open(file, encoding='latin-1') as f:
         data = f.readlines()
 
     # post rules
@@ -33,9 +33,10 @@ def update_pulled_pork(file: str) -> int:
     for line in data:
         rule = json.loads(line)
         try:
-            Rule.get_by_sid_and_rev(rule['sid'], rule['rev'])
+            Rule.get_rule(rule['sid'], rule['rev'], rule['gid'])
         except Http404:
-            Rule(sid=rule['sid'], rev=rule['rev'], action=rule['action'], message=rule['msg'], data_json=rule).save()
+            Rule(sid=rule['sid'], rev=rule['rev'], gid=rule['gid'],
+                 action=rule['action'], message=rule['msg'], data_json=rule).save()
             count += 1
     print(f'Added {count} new rules.')
 

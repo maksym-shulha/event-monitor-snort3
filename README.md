@@ -1,4 +1,17 @@
-# event-monitor-snort3
+# Event monitor Snort3
+## RUN
+```docker compose up```
+### How to control daemons:
+Open another window in bash:
 
-Project scheme:
-<img width="2389" alt="Screenshot 2023-11-20 at 16 50 46" src="https://github.com/maksym-shulha/event-monitor-snort3/assets/123635020/e497a301-304d-48b6-931c-396b315ddcbe">
+```docker exec -it snort bash```
+
+You can use:
+```
+supervisorctl status
+supervisorctl status process_name
+supervisorctl restart process_name
+supervisorctl stop process_name
+supervisorctl start process_name
+```
+Notice, that we have 3 processes: **server**, **snort** and **watcher**.
