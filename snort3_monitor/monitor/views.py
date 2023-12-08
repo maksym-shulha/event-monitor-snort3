@@ -95,10 +95,9 @@ class EventCountList(generics.ListAPIView):
         type_of_filter = self.request.query_params.get('type')
         period = self.request.query_params.get('period')
 
-        # checking if all params are included
-        if not (type_of_filter and period):
-            raise ValidationError(
-                {"error": "You should define 'type' of filter (sid or addr) and 'period' (all, day, week, month)"})
+        # checking if type params are included
+        if not type_of_filter:
+            raise ValidationError({"error": "You should define 'type' of filter (sid or addr)"})
 
         # checking if period is known
         if periods.get(period):
