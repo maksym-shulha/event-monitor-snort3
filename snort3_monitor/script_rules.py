@@ -54,6 +54,8 @@ def update_pulled_pork(file: str) -> int:
             logger.error(f"Rule's data is not full: {rule}")
 
     logger.info(f'Added {count} new rules.')
+    os.system("supervisorctl restart snort")
+
     return count
 
 
