@@ -1,14 +1,27 @@
+import json
+import logging
 import os
 import time
+from datetime import datetime
+from json import JSONDecodeError
 
 import django
+from django.http import Http404
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "snort3_monitor.settings")
 django.setup()
-from monitor.models import Event
+from monitor.models import Event, Rule
+
+
+logger = logging.getLogger('events')
+formatter = logging.Formatter('%(name)s -> %(levelname)s : %(message)s')
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 class OnMyWatch:
@@ -58,18 +71,43 @@ class Handler(FileSystemEventHandler):
         else:
             print(event.event_type)
 
-    @staticmethod
-    def read_data(event) -> None:
+    def read_data(self, event) -> None:
         """open file with changes and send it into a model"""
         try:
             with open(event.src_path, encoding='latin-1') as file:
                 file.seek(Handler.current_position)
                 new_data = file.readlines()
                 if new_data:
-                    Event.create_from_watcher(new_data)
+                    self.save_data(new_data)
                 Handler.current_position = file.tell()
-        except (PermissionError, FileNotFoundError):
-            pass
+        except (PermissionError, FileNotFoundError) as e:
+            logger.error(f'{event.src_path} -> {e}')
+
+    @staticmethod
+    def save_data(data: list) -> None:
+        """Saving events into data base"""
+        for line in data:
+            try:
+                event_data = json.loads(line)
+
+                # drop unuseful fields
+                allowed_fields = ['src_addr', 'src_port', 'dst_addr', 'dst_port',
+                                  'proto', 'seconds', 'sid', 'rev', 'gid']
+                event_data = {key: value for key, value in event_data.items() if key in allowed_fields}
+
+                # save event
+                timestamp = datetime.fromtimestamp(event_data.pop('seconds'))
+                rule = Rule.get_rule(event_data.pop('sid'), event_data.pop('rev'), event_data.pop('gid'))
+                new_event = Event(**event_data)
+                new_event.rule = rule
+                new_event.timestamp = timestamp
+                new_event.save()
+            except KeyError:
+                logger.error(f'Event has no full required information: {line}')
+            except Http404:
+                logger.error(f'There is no Rule matches with event: {line}')
+            except JSONDecodeError:
+                logger.error(f'There is decoding error: {line}')
 
 
 if __name__ == '__main__':

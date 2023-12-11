@@ -1,6 +1,3 @@
-import json
-from datetime import datetime
-
 from django.db import models
 from django.shortcuts import get_object_or_404
 
@@ -14,26 +11,6 @@ class Event(models.Model):
     dst_port = models.IntegerField(null=True, blank=True)
     proto = models.CharField(max_length=128)
     mark_as_deleted = models.BooleanField(default=False)
-
-    @staticmethod
-    def create_from_watcher(data: list) -> None:
-        """method for processing data from watcher script"""
-        for line in data:
-            try:
-                event_data = json.loads(line)
-
-                allowed_fields = ['src_addr', 'src_port', 'dst_addr', 'dst_port',
-                                  'proto', 'seconds', 'sid', 'rev', 'gid']
-                event_data = {key: value for key, value in event_data.items() if key in allowed_fields}
-                timestamp = datetime.fromtimestamp(event_data.pop('seconds'))
-                rule = Rule.get_rule(event_data.pop('sid'), event_data.pop('rev'), event_data.pop('gid'))
-
-                new_event = Event(**event_data)
-                new_event.rule = rule
-                new_event.timestamp = timestamp
-                new_event.save()
-            except KeyError as e:
-                print(e)
 
 
 class Rule(models.Model):
