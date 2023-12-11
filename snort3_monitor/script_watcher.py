@@ -37,7 +37,13 @@ class OnMyWatch:
                                self.watchDirectory,
                                recursive=False
                                )
-        self.observer.start()
+        try:
+            self.observer.start()
+            logger.info('Running.')
+        except FileNotFoundError:
+            logger.error('Watch directory does not exist.')
+            return
+
         try:
             while True:
                 time.sleep(1)
@@ -49,18 +55,22 @@ class OnMyWatch:
 class Handler(FileSystemEventHandler):
     """
     Class for handling changes in directory.
-    Queue will be useful for multifile monitoring.
+    Queue will be useful for multi file monitoring.
+    Current position is saving into a file.
     """
-    current_position = 0
+    current_position_file = 'current_position.txt'
     queue = True
 
     def on_any_event(self, event) -> None:
-        """triggered when changes in directory will be detected"""
+        """
+        Triggered when changes in directory will be detected.
+        """
         if not event.src_path.endswith('alert_json.txt'):
-            print('Another file')
+            logger.info('Unsupported file name.')
             return
+
         elif event.event_type == 'modified' or event.event_type == 'created':
-            print('File has changed')
+            logger.info('Changes in alert_json.txt.')
             while True:
                 if Handler.queue:
                     Handler.queue = False
@@ -69,23 +79,25 @@ class Handler(FileSystemEventHandler):
                     break
                 time.sleep(1)
         else:
-            print(event.event_type)
+            logger.info('Unsupported changes in directory.')
 
     def read_data(self, event) -> None:
-        """open file with changes and send it into a model"""
+        """Open file with changes and read data"""
         try:
             with open(event.src_path, encoding='latin-1') as file:
-                file.seek(Handler.current_position)
+                file.seek(self.get_current_position())
                 new_data = file.readlines()
-                if new_data:
-                    self.save_data(new_data)
-                Handler.current_position = file.tell()
+                self.save_current_position(file.tell())
+
+            if new_data:
+                self.save_data(new_data)
+
         except (PermissionError, FileNotFoundError) as e:
             logger.error(f'{event.src_path} -> {e}')
 
     @staticmethod
     def save_data(data: list) -> None:
-        """Saving events into data base"""
+        """Saving data into data base"""
         for line in data:
             try:
                 event_data = json.loads(line)
@@ -108,6 +120,21 @@ class Handler(FileSystemEventHandler):
                 logger.error(f'There is no Rule matches with event: {line}')
             except JSONDecodeError:
                 logger.error(f'There is decoding error: {line}')
+
+    @classmethod
+    def get_current_position(cls):
+        """Get current position from file or 0"""
+        try:
+            with open(cls.current_position_file, 'r') as f:
+                return int(f.read().strip())
+        except FileNotFoundError:
+            return 0
+
+    @classmethod
+    def save_current_position(cls, position):
+        """Save current position"""
+        with open(cls.current_position_file, 'w') as f:
+            f.write(str(position))
 
 
 if __name__ == '__main__':
