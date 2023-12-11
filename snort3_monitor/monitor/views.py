@@ -65,20 +65,20 @@ class RequestList(generics.ListAPIView):
 
         # checks if params are proper"YYYY-MM-DD HH:MM:SS"
         try:
-           period_start = datetime.strptime(period_start, "%Y-%m-%d %H:%M:%S")
-           period_start = make_aware(period_start, utc)
-           period_stop = datetime.strptime(period_stop, "%Y-%m-%d %H:%M:%S") + timedelta(days=1)
-           period_stop = make_aware(period_stop, utc)
-           
-        except ValueError:
-        # the format "YYYY-MM-DD" without time
-          try:
-            period_start = datetime.strptime(period_start, "%Y-%m-%d")
+            period_start = datetime.strptime(period_start, "%Y-%m-%d %H:%M:%S")
             period_start = make_aware(period_start, utc)
-            period_stop = datetime.strptime(period_stop, "%Y-%m-%d") + timedelta(days=1)
+            period_stop = datetime.strptime(period_stop, "%Y-%m-%d %H:%M:%S") + timedelta(days=1)
             period_stop = make_aware(period_stop, utc)
-          except ValueError:
-             raise ValidationError({"error": "Use format YYYY-MM-DD HH:MM:SS or YYYY-MM-DD"})
+
+        except ValueError:
+            # the format "YYYY-MM-DD" without time
+            try:
+                period_start = datetime.strptime(period_start, "%Y-%m-%d")
+                period_start = make_aware(period_start, utc)
+                period_stop = datetime.strptime(period_stop, "%Y-%m-%d") + timedelta(days=1)
+                period_stop = make_aware(period_stop, utc)
+            except ValueError:
+                raise ValidationError({"error": "Use format YYYY-MM-DD HH:MM:SS or YYYY-MM-DD"})
 
         # checks if period is less than week
         if period_stop - period_start > timedelta(days=7):
@@ -108,12 +108,13 @@ class EventCountList(generics.ListAPIView):
             raise ValidationError({"error": "You should define 'type' of filter (sid or addr)"})
 
         # checking if period is known
-        if periods.get(period):
-            period_start = datetime.now() - periods[period]
-            queryset = queryset.filter(timestamp__gte=period_start)
-        else:
-            if period != 'all':
-                raise ValidationError({"error": "Unknown 'period', use 'all', 'day', 'week' or 'month'"})
+        if period:
+            if periods.get(period):
+                period_start = datetime.now() - periods[period]
+                queryset = queryset.filter(timestamp__gte=period_start)
+            else:
+                if period != 'all':
+                    raise ValidationError({"error": "Unknown 'period', use 'all', 'day', 'week' or 'month'"})
 
         # aggregation
         if type_of_filter == 'addr':
