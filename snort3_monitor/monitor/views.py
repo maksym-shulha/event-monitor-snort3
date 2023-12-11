@@ -63,22 +63,9 @@ class RequestList(generics.ListAPIView):
         if not (period_start and period_stop):
             raise ValidationError({"error": "You should define 'period_start' and 'period_stop' in format DD-MM-YY"})
 
-        # checks if params are proper"YYYY-MM-DD HH:MM:SS"
-        try:
-            period_start = datetime.strptime(period_start, "%Y-%m-%d %H:%M:%S")
-            period_start = make_aware(period_start, utc)
-            period_stop = datetime.strptime(period_stop, "%Y-%m-%d %H:%M:%S") + timedelta(days=1)
-            period_stop = make_aware(period_stop, utc)
-
-        except ValueError:
-            # the format "YYYY-MM-DD" without time
-            try:
-                period_start = datetime.strptime(period_start, "%Y-%m-%d")
-                period_start = make_aware(period_start, utc)
-                period_stop = datetime.strptime(period_stop, "%Y-%m-%d") + timedelta(days=1)
-                period_stop = make_aware(period_stop, utc)
-            except ValueError:
-                raise ValidationError({"error": "Use format YYYY-MM-DD HH:MM:SS or YYYY-MM-DD"})
+        # checks if format is proper
+        period_start = self.validate_date(period_start)
+        period_stop = self.validate_date(period_stop) + timedelta(days=1)
 
         # checks if period is less than week
         if period_stop - period_start > timedelta(days=7):
@@ -86,6 +73,18 @@ class RequestList(generics.ListAPIView):
 
         queryset = queryset.filter(timestamp__gte=period_start, timestamp__lte=period_stop)
         return queryset
+
+    @staticmethod
+    def validate_date(date):
+        """Validating date format"""
+        formats = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%d"]
+        for frmt in formats:
+            try:
+                date = datetime.strptime(date, frmt)
+                return make_aware(date, utc)
+            except ValueError:
+                pass
+        raise ValidationError({"error": "Use format YYYY-MM-DD HH:MM:SS (you can skip SS, MM, HH)"})
 
 
 class EventCountList(generics.ListAPIView):
