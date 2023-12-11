@@ -37,6 +37,9 @@ class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
             if params.get('sid') is not None:
                 params['rule__sid'] = params.pop('sid')
 
+            if params.get('page') is not None:
+                params.pop('page')
+
             queryset = queryset.filter(**params)
         return queryset
 
