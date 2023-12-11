@@ -133,7 +133,11 @@ class EventCountList(generics.ListAPIView):
 class RuleCreate(APIView):
     def post(self, request, *args, **kwargs) -> Response:
         """POST method, but uses script for checking changes in pulledpork3 rules"""
-        count = update_pulled_pork('rules.txt')
+        try:
+            count = update_pulled_pork('rules.txt')
+        except RuntimeError as e:
+            return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)
+
         return Response({'message': f'{count} rules has been added'}, status=status.HTTP_201_CREATED)
 
 

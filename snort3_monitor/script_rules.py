@@ -18,12 +18,12 @@ def update_pulled_pork(file: str) -> int:
     # updating rules
     exit_code = os.system("/usr/local/bin/pulledpork3/pulledpork.py -c /usr/local/etc/pulledpork3/pulledpork.conf")
     if exit_code != 0:
-        raise RuntimeError('Update was not executed')
+        raise RuntimeError('Update PulledPork was not executed.')
     # dump rules
     exit_code = os.system(
         f"snort -c /usr/local/etc/snort/snort.lua --dump-rule-meta --plugin-path /usr/local/etc/so_rules/ > {file}")
     if exit_code != 0:
-        raise RuntimeError('Dump was not executed')
+        raise RuntimeError('Dump rules into file was not executed.')
 
     with open(file, encoding='latin-1') as f:
         data = f.readlines()
@@ -33,13 +33,18 @@ def update_pulled_pork(file: str) -> int:
     for line in data:
         rule = json.loads(line)
         try:
-            Rule.get_rule(rule['sid'], rule['rev'], rule['gid'])
-        except Http404:
-            Rule(sid=rule['sid'], rev=rule['rev'], gid=rule['gid'],
-                 action=rule['action'], message=rule['msg'], data_json=rule).save()
-            count += 1
-    print(f'Added {count} new rules.')
+            try:
+                # checking if rule exists
+                Rule.get_rule(rule['sid'], rule['rev'], rule['gid'])
+            except Http404:
+                # creating new rule if it is not exists
+                Rule(sid=rule['sid'], rev=rule['rev'], gid=rule['gid'],
+                     action=rule['action'], message=rule['msg'], data_json=rule).save()
+                count += 1
+        except KeyError:
+            print("Rule's data is not full: ", rule)
 
+    print(f'Added {count} new rules.')
     return count
 
 
