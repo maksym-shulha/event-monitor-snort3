@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 import django
@@ -8,6 +9,14 @@ from django.http import Http404
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "snort3_monitor.settings")
 django.setup()
 from monitor.models import Rule
+
+
+logger = logging.getLogger('rules')
+formatter = logging.Formatter('%(name)s -> %(levelname)s : %(message)s')
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def update_pulled_pork(file: str) -> int:
@@ -42,9 +51,9 @@ def update_pulled_pork(file: str) -> int:
                      action=rule['action'], message=rule['msg'], data_json=rule).save()
                 count += 1
         except KeyError:
-            print("Rule's data is not full: ", rule)
+            logger.error(f"Rule's data is not full: {rule}")
 
-    print(f'Added {count} new rules.')
+    logger.info(f'Added {count} new rules.')
     return count
 
 
