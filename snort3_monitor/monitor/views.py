@@ -156,6 +156,8 @@ def validate_params(entered, allowed: list) -> None:
     """
     validate query parameters
     """
+    allowed.append('page')
+
     only_allowed_params_present = set(entered).issubset(set(allowed))
     if not only_allowed_params_present:
         raise ValidationError(
