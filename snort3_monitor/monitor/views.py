@@ -13,8 +13,8 @@ from rest_framework.views import APIView
 
 from script_rules import update_pulled_pork
 from .models import Event, Request, Rule
-from .serializers import EventSerializer, EventCountAddressSerializer, EventCountRuleSerializer, RequestSerializer
-from .serializers import RuleSerializer
+from .serializers import EventSerializer, EventCountAddressSerializer, \
+    EventCountRuleSerializer, RequestSerializer, RuleSerializer
 
 
 class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
@@ -32,15 +32,14 @@ class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
         params = self.request.query_params
         params = {key: value for key, value in params.items()}
         if params:
-            # Checking if all params are allowed
-            only_allowed_params_present = set(params.keys()).issubset(set(allowed_params))
-            if not only_allowed_params_present:
-                raise ValidationError(
-                    {"error": "You can use only 'src_addr', 'src_port', 'dst_addr', 'dst_port', "
-                              "'sid' and 'proto' to filter events"})
+            validate_params(params.keys(), allowed_params)
+
             # changing sid key
-            if params.get('sid'):
+            if params.get('sid') is not None:
                 params['rule__sid'] = params.pop('sid')
+
+            if params.get('page') is not None:
+                params.pop('page')
 
             queryset = queryset.filter(**params)
         return queryset
@@ -58,28 +57,19 @@ class RequestList(generics.ListAPIView):
     def get_queryset(self) -> QuerySet:
         queryset = super().get_queryset()
 
+        allowed_params = ['period_start', 'period_stop']
+        params = [key for key in self.request.query_params]
+        validate_params(params, allowed_params)
+
         # checks if all params are included
         period_start = self.request.query_params.get('period_start')
         period_stop = self.request.query_params.get('period_stop')
         if not (period_start and period_stop):
-            raise ValidationError({"error": "You should define 'period_start' and 'period_stop' in format DD-MM-YY"})
+            raise ValidationError({"error": "You should define 'period_start' and 'period_stop'."})
 
-        # checks if params are proper"YYYY-MM-DD HH:MM:SS"
-        try:
-            period_start = datetime.strptime(period_start, "%Y-%m-%d %H:%M:%S")
-            period_start = make_aware(period_start, utc)
-            period_stop = datetime.strptime(period_stop, "%Y-%m-%d %H:%M:%S") + timedelta(days=1)
-            period_stop = make_aware(period_stop, utc)
-
-        except ValueError:
-            # the format "YYYY-MM-DD" without time
-            try:
-                period_start = datetime.strptime(period_start, "%Y-%m-%d")
-                period_start = make_aware(period_start, utc)
-                period_stop = datetime.strptime(period_stop, "%Y-%m-%d") + timedelta(days=1)
-                period_stop = make_aware(period_stop, utc)
-            except ValueError:
-                raise ValidationError({"error": "Use format YYYY-MM-DD HH:MM:SS or YYYY-MM-DD"})
+        # checks if format is proper
+        period_start = self.validate_date(period_start)
+        period_stop = self.validate_date(period_stop) + timedelta(days=1)
 
         # checks if period is less than week
         if period_stop - period_start > timedelta(days=7):
@@ -87,6 +77,18 @@ class RequestList(generics.ListAPIView):
 
         queryset = queryset.filter(timestamp__gte=period_start, timestamp__lte=period_stop)
         return queryset
+
+    @staticmethod
+    def validate_date(date):
+        """Validating date format"""
+        formats = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%d"]
+        for frmt in formats:
+            try:
+                date = datetime.strptime(date, frmt)
+                return make_aware(date, utc)
+            except ValueError:
+                pass
+        raise ValidationError({"error": "Use format YYYY-MM-DD HH:MM:SS (you can skip SS, MM, HH)"})
 
 
 class EventCountList(generics.ListAPIView):
@@ -101,28 +103,31 @@ class EventCountList(generics.ListAPIView):
             'month': timedelta(days=30)
         }
 
-        type_of_filter = self.request.query_params.get('type')
-        period = self.request.query_params.get('period')
+        allowed_params = ['type', 'period']
+        params = self.request.query_params
+        params = {key: value for key, value in params.items()}
 
-        # checking if type params are included
-        if not type_of_filter:
+        # check existing type parameter
+        if params.get('type') is None:
             raise ValidationError({"error": "You should define 'type' of filter (sid or addr)"})
 
-        # checking if period is known
-        if period:
-            if periods.get(period):
-                period_start = datetime.now() - periods[period]
+        validate_params(params.keys(), allowed_params)
+
+        # check if period is known and filter it
+        if params.get('period') is not None:
+            if periods.get(params.get('period')) is not None:
+                period_start = datetime.now() - periods[params.get('period')]
                 queryset = queryset.filter(timestamp__gte=period_start)
             else:
-                if period != 'all':
+                if params.get('period') != 'all':
                     raise ValidationError({"error": "Unknown 'period', use 'all', 'day', 'week' or 'month'"})
 
         # aggregation
-        if type_of_filter == 'addr':
+        if params.get('type') == 'addr':
             EventCountList.serializer_class = EventCountAddressSerializer
             queryset = queryset.annotate(addr_pair=Concat('src_addr', Value('/'), 'dst_addr')
                                          ).values('addr_pair').annotate(count=Count('addr_pair'))
-        elif type_of_filter == 'sid':
+        elif params.get('type') == 'sid':
             EventCountList.serializer_class = EventCountRuleSerializer
             queryset = queryset.values(sid=F('rule__sid')).annotate(count=Count('rule__sid'))
         else:
@@ -135,7 +140,11 @@ class EventCountList(generics.ListAPIView):
 class RuleCreate(APIView):
     def post(self, request, *args, **kwargs) -> Response:
         """POST method, but uses script for checking changes in pulledpork3 rules"""
-        count = update_pulled_pork('rules.txt')
+        try:
+            count = update_pulled_pork('rules.txt')
+        except RuntimeError as e:
+            return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)
+
         return Response({'message': f'{count} rules has been added'}, status=status.HTTP_201_CREATED)
 
 
@@ -177,3 +186,15 @@ class RuleListView(generics.ListAPIView):
             return Response({
                 "error": "Bad Request", "message": "The request is malformed or invalid."},
                 status=400)
+
+
+def validate_params(entered, allowed: list) -> None:
+    """
+    validate query parameters
+    """
+    allowed.append('page')
+
+    only_allowed_params_present = set(entered).issubset(set(allowed))
+    if not only_allowed_params_present:
+        raise ValidationError(
+            {"error": f"You can use only {', '.join(allowed)} as query filters."})
