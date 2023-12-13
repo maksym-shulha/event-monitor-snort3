@@ -60,4 +60,7 @@ def update_pulled_pork(file: str) -> int:
 
 
 if __name__ == '__main__':
-    update_pulled_pork('rules.txt')
+    try:
+        update_pulled_pork('rules.txt')
+    except RuntimeError as e:
+        logger.error(e)

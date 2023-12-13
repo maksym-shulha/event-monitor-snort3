@@ -4,6 +4,8 @@ services:
     container_name: snort
     ports:
       - "8000:8000"
+#    volumes:
+#      - ./Thursday-WorkingHours.pcap:/root/snort/test.pcap
     depends_on:
       - db
   db:
