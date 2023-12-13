@@ -161,31 +161,23 @@ class RuleListView(generics.ListAPIView):
     serializer_class = RuleSerializer
 
     def get_queryset(self):
-        queryset = Rule.objects.all()
+        queryset = super().get_queryset()
+
+        allowed_params = ['sid', 'rev', 'gid']
+        params = [key for key in self.request.query_params]
+        validate_params(params, allowed_params)
 
         sid = self.request.query_params.get('sid', None)
         rev = self.request.query_params.get('rev', None)
-        action = self.request.query_params.get('action', None)
-
+        gid = self.request.query_params.get('gid', None)
         if sid:
             queryset = queryset.filter(sid=sid)
         if rev:
             queryset = queryset.filter(rev=rev)
-        if action:
-            queryset = queryset.filter(action=action)
+        if gid:
+            queryset = queryset.filter(gid=gid)
 
         return queryset
-
-    def list(self, request, *args, **kwargs):
-        try:
-            queryset = self.get_queryset()
-            serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
-
-        except Exception:
-            return Response({
-                "error": "Bad Request", "message": "The request is malformed or invalid."},
-                status=400)
 
 
 def validate_params(entered, allowed: list) -> None:
