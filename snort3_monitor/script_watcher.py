@@ -7,8 +7,6 @@ from json import JSONDecodeError
 
 import django
 from django.http import Http404
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "snort3_monitor.settings")
@@ -25,66 +23,29 @@ logger.addHandler(handler)
 
 
 class OnMyWatch:
-    watchDirectory = '/var/log/snort/'
+    """
+    Responsible to check log file for changes. You can define
+    watch file and file for saving current position.
+    """
+    watch_file: str = '/var/log/snort/alert_json.txt'
+    current_position_file: str = 'current_position.txt'
 
-    def __init__(self):
-        self.observer = Observer()
-
-    def run(self) -> None:
-        """Start of watching into a directory"""
-        event_handler = Handler()
-        self.observer.schedule(event_handler,
-                               self.watchDirectory,
-                               recursive=False
-                               )
-        try:
-            self.observer.start()
-            logger.info('Running.')
-        except FileNotFoundError:
-            logger.error('Watch directory does not exist.')
-            return
-
+    def run(self):
+        logger.info('Running.')
         try:
             while True:
-                time.sleep(1)
+                if os.path.exists(self.watch_file):
+                    self.read_data()
+                else:
+                    logger.error('Watch file does not exist.')
+                time.sleep(5)
         except KeyboardInterrupt:
-            self.observer.stop()
-        self.observer.join()
+            logger.info('Stopped.')
 
-
-class Handler(FileSystemEventHandler):
-    """
-    Class for handling changes in directory.
-    Queue will be useful for multi file monitoring.
-    Current position is saving into a file.
-    """
-    current_position_file = 'current_position.txt'
-    queue = True
-
-    def on_any_event(self, event) -> None:
-        """
-        Triggered when changes in directory will be detected.
-        """
-        if not event.src_path.endswith('alert_json.txt'):
-            logger.info('Unsupported file name.')
-            return
-
-        elif event.event_type == 'modified' or event.event_type == 'created':
-            logger.info('Changes in alert_json.txt.')
-            while True:
-                if Handler.queue:
-                    Handler.queue = False
-                    self.read_data(event)
-                    Handler.queue = True
-                    break
-                time.sleep(1)
-        else:
-            logger.info('Unsupported changes in directory.')
-
-    def read_data(self, event) -> None:
-        """Open file with changes and read data"""
+    def read_data(self):
+        """Open file and read data if changes are detected."""
         try:
-            with open(event.src_path, encoding='latin-1') as file:
+            with open(self.watch_file, encoding='latin-1') as file:
                 file.seek(self.get_current_position())
                 new_data = file.readlines()
                 self.save_current_position(file.tell())
@@ -92,11 +53,11 @@ class Handler(FileSystemEventHandler):
             if new_data:
                 self.save_data(new_data)
 
-        except (PermissionError, FileNotFoundError) as e:
-            logger.error(f'{event.src_path} -> {e}')
+        except PermissionError:
+            logger.error(f'Set up permissions for {self.watch_file}!')
 
     @staticmethod
-    def save_data(data: list) -> None:
+    def save_data(data: list):
         """Saving data into data base"""
         for line in data:
             try:
@@ -122,8 +83,8 @@ class Handler(FileSystemEventHandler):
                 logger.error(f'There is decoding error: {line}')
 
     @classmethod
-    def get_current_position(cls):
-        """Get current position from file or 0"""
+    def get_current_position(cls) -> int:
+        """Get current position from file if it already exists."""
         try:
             with open(cls.current_position_file, 'r') as f:
                 return int(f.read().strip())
@@ -131,12 +92,12 @@ class Handler(FileSystemEventHandler):
             return 0
 
     @classmethod
-    def save_current_position(cls, position):
+    def save_current_position(cls, position: int):
         """Save current position"""
         with open(cls.current_position_file, 'w') as f:
             f.write(str(position))
 
 
 if __name__ == '__main__':
-    watch = OnMyWatch()
-    watch.run()
+    watcher = OnMyWatch()
+    watcher.run()
