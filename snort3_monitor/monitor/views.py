@@ -126,8 +126,8 @@ class EventCountList(generics.ListAPIView):
         if params.get('type') == 'addr':
             EventCountList.serializer_class = EventCountAddressSerializer
             queryset = queryset.annotate(addr_pair=Concat('src_addr', Value('/'), 'dst_addr')
-                                         ).values('addr_pair').annotate(count=Count('addr_pair')).order_by(
-                                          'addr_pair', 'count')
+                                         ).values('addr_pair').annotate(count=Count('addr_pair')).order_by('addr_pair', 
+                                                                                                           'count')
         elif params.get('type') == 'sid':
             EventCountList.serializer_class = EventCountRuleSerializer
             queryset = queryset.values(sid=F('rule__sid')).annotate(count=Count('rule__sid')).order_by('sid', 'count')
@@ -176,10 +176,8 @@ class RuleListView(generics.ListAPIView):
         if rev:
             queryset = queryset.filter(rev=rev)
         if gid:
-            queryset = queryset.filter(gid=gid)
-            
+            queryset = queryset.filter(gid=gid)  
         queryset = queryset.order_by('sid', 'rev', 'gid')
-        
         return queryset
 
 
