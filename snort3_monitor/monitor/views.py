@@ -95,7 +95,7 @@ class EventCountList(generics.ListAPIView):
     queryset = Event.objects.filter(mark_as_deleted=False)
 
     def get_queryset(self) -> QuerySet:
-        queryset = super().get_queryset()
+        queryset = Event.objects.all()
         periods = {
             'all': None,
             'day': timedelta(days=1),
@@ -126,10 +126,10 @@ class EventCountList(generics.ListAPIView):
         if params.get('type') == 'addr':
             EventCountList.serializer_class = EventCountAddressSerializer
             queryset = queryset.annotate(addr_pair=Concat('src_addr', Value('/'), 'dst_addr')
-                                         ).values('addr_pair').annotate(count=Count('addr_pair'))
+                                         ).values('addr_pair').annotate(count=Count('addr_pair')).order_by('addr_pair', 'count')
         elif params.get('type') == 'sid':
             EventCountList.serializer_class = EventCountRuleSerializer
-            queryset = queryset.values(sid=F('rule__sid')).annotate(count=Count('rule__sid'))
+            queryset = queryset.values(sid=F('rule__sid')).annotate(count=Count('rule__sid')).order_by('sid', 'count')
         else:
             raise ValidationError(
                 {"error": "Unknown 'type', use 'sid' or 'addr'"})
@@ -161,7 +161,7 @@ class RuleListView(generics.ListAPIView):
     serializer_class = RuleSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = Rule.objects.all()
 
         allowed_params = ['sid', 'rev', 'gid']
         params = [key for key in self.request.query_params]
@@ -176,7 +176,9 @@ class RuleListView(generics.ListAPIView):
             queryset = queryset.filter(rev=rev)
         if gid:
             queryset = queryset.filter(gid=gid)
-
+        
+        queryset = queryset.order_by('sid', 'rev', 'gid')
+        
         return queryset
 
 
