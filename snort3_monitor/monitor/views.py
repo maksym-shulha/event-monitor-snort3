@@ -184,7 +184,7 @@ class RuleListView(generics.ListAPIView):
         if rev:
             queryset = queryset.filter(rev=rev)
         if gid:
-            queryset = queryset.filter(gid=gid)  
+            queryset = queryset.filter(gid=gid)
         return queryset.order_by('sid', 'rev', 'gid')
 
 
