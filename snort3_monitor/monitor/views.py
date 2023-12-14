@@ -125,12 +125,21 @@ class EventCountList(generics.ListAPIView):
         # aggregation
         if params.get('type') == 'addr':
             EventCountList.serializer_class = EventCountAddressSerializer
-            queryset = queryset.annotate(addr_pair=Concat('src_addr', Value('/'), 'dst_addr')
-                                         ).values('addr_pair').annotate(
-                                         count=Count('addr_pair')).order_by('addr_pair', 'count')
+            queryset = (
+                queryset
+                .annotate(addr_pair=Concat('src_addr', Value('/'), 'dst_addr'))
+                .values('addr_pair')
+                .annotate(count=Count('addr_pair'))
+                .order_by('addr_pair', 'count')
+            )
         elif params.get('type') == 'sid':
             EventCountList.serializer_class = EventCountRuleSerializer
-            queryset = queryset.values(sid=F('rule__sid')).annotate(count=Count('rule__sid')).order_by('sid', 'count')
+            queryset = (
+                queryset
+                .values(sid=F('rule__sid'))
+                .annotate(count=Count('rule__sid'))
+                .order_by('sid', 'count')
+            )
         else:
             raise ValidationError(
                 {"error": "Unknown 'type', use 'sid' or 'addr'"})
@@ -167,7 +176,6 @@ class RuleListView(generics.ListAPIView):
         allowed_params = ['sid', 'rev', 'gid']
         params = [key for key in self.request.query_params]
         validate_params(params, allowed_params)
-
         sid = self.request.query_params.get('sid', None)
         rev = self.request.query_params.get('rev', None)
         gid = self.request.query_params.get('gid', None)
