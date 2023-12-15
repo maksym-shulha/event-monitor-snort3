@@ -1,3 +1,5 @@
+import logging
+import threading
 from datetime import datetime, timedelta
 
 from django.db.models import Count, Value
@@ -15,6 +17,14 @@ from script_rules import update_pulled_pork
 from .models import Event, Request, Rule
 from .serializers import EventSerializer, EventCountAddressSerializer, \
     EventCountRuleSerializer, RequestSerializer, RuleSerializer
+
+
+logger = logging.getLogger('API')
+formatter = logging.Formatter('%(name)s -> %(levelname)s : %(message)s')
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
@@ -146,14 +156,17 @@ class EventCountList(generics.ListAPIView):
 
 
 class RuleCreate(APIView):
-    def post(self, request, *args, **kwargs) -> Response:
-        """POST method, but uses script for checking changes in pulledpork3 rules"""
+    @staticmethod
+    def background_update():
         try:
             count = update_pulled_pork('rules.txt')
+            logger.info(f"{count} new rules have been added.")
         except RuntimeError as e:
-            return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)
+            logger.error(e)
 
-        return Response({'message': f'{count} rules has been added'}, status=status.HTTP_201_CREATED)
+    def post(self, request, *args, **kwargs) -> Response:
+        threading.Thread(target=self.background_update).start()
+        return Response({'message': 'Update process started.'}, status=status.HTTP_202_ACCEPTED)
 
 
 def error404(request, exception):
