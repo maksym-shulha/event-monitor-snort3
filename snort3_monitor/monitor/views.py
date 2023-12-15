@@ -130,7 +130,7 @@ class EventCountList(generics.ListAPIView):
                 .annotate(addr_pair=Concat('src_addr', Value('/'), 'dst_addr'))
                 .values('addr_pair')
                 .annotate(count=Count('addr_pair'))
-                .order_by('addr_pair', 'count')
+                .order_by('count')
             )
         elif params.get('type') == 'sid':
             EventCountList.serializer_class = EventCountRuleSerializer
@@ -138,7 +138,7 @@ class EventCountList(generics.ListAPIView):
                 queryset
                 .values(sid=F('rule__sid'))
                 .annotate(count=Count('rule__sid'))
-                .order_by('sid', 'count')
+                .order_by('count')
             )
         else:
             raise ValidationError(
