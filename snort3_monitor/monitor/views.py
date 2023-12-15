@@ -44,10 +44,10 @@ class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
             queryset = queryset.filter(**params)
         return queryset
 
-    def patch(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs) -> Response:
         queryset = self.get_queryset()
         queryset.update(mark_as_deleted=True)
-        return Response({"message": "All events are marked as deleted."})
+        return Response({"message": "All events are marked as deleted."}, status=status.HTTP_200_OK)
 
 
 class RequestList(generics.ListAPIView):
@@ -79,7 +79,7 @@ class RequestList(generics.ListAPIView):
         return queryset
 
     @staticmethod
-    def validate_date(date):
+    def validate_date(date: str) -> datetime:
         """Validating date format"""
         formats = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%d"]
         for frmt in formats:
@@ -130,7 +130,6 @@ class EventCountList(generics.ListAPIView):
                 .annotate(addr_pair=Concat('src_addr', Value('/'), 'dst_addr'))
                 .values('addr_pair')
                 .annotate(count=Count('addr_pair'))
-                .order_by('count')
             )
         elif params.get('type') == 'sid':
             EventCountList.serializer_class = EventCountRuleSerializer
@@ -138,13 +137,12 @@ class EventCountList(generics.ListAPIView):
                 queryset
                 .values(sid=F('rule__sid'))
                 .annotate(count=Count('rule__sid'))
-                .order_by('count')
             )
         else:
             raise ValidationError(
                 {"error": "Unknown 'type', use 'sid' or 'addr'"})
 
-        return queryset
+        return queryset.order_by('count')
 
 
 class RuleCreate(APIView):
@@ -170,12 +168,13 @@ class RuleListView(generics.ListAPIView):
     queryset = Rule.objects.all()
     serializer_class = RuleSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         queryset = Rule.objects.all()
 
         allowed_params = ['sid', 'rev', 'gid']
         params = [key for key in self.request.query_params]
         validate_params(params, allowed_params)
+
         sid = self.request.query_params.get('sid', None)
         rev = self.request.query_params.get('rev', None)
         gid = self.request.query_params.get('gid', None)
@@ -185,7 +184,8 @@ class RuleListView(generics.ListAPIView):
             queryset = queryset.filter(rev=rev)
         if gid:
             queryset = queryset.filter(gid=gid)
-        return queryset.order_by('sid', 'rev', 'gid')
+
+        return queryset.order_by('sid', 'gid', 'rev')
 
 
 def validate_params(entered, allowed: list) -> None:

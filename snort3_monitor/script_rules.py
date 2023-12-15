@@ -30,12 +30,15 @@ def update_pulled_pork(file: str) -> int:
         raise RuntimeError('Update PulledPork was not executed.')
     # dump rules
     exit_code = os.system(
-        f"snort -c /usr/local/etc/snort/snort.lua --dump-rule-meta --plugin-path /usr/local/etc/so_rules/ > {file}")
+        f"snort -c /usr/local/etc/snort/snort.lua --dump-rule-meta --tweaks custom > {file}")
     if exit_code != 0:
         raise RuntimeError('Dump rules into file was not executed.')
 
     with open(file, encoding='latin-1') as f:
         data = f.readlines()
+
+    if not data:
+        raise RuntimeError('File is empty!')
 
     # post rules
     count = 0
@@ -53,7 +56,6 @@ def update_pulled_pork(file: str) -> int:
         except KeyError:
             logger.error(f"Rule's data is not full: {rule}")
 
-    logger.info(f'Added {count} new rules.')
     os.system("supervisorctl restart snort")
 
     return count
@@ -61,6 +63,7 @@ def update_pulled_pork(file: str) -> int:
 
 if __name__ == '__main__':
     try:
-        update_pulled_pork('rules.txt')
+        count = update_pulled_pork('rules.txt')
+        logger.info(f'Added {count} new rules.')
     except RuntimeError as e:
         logger.error(e)
