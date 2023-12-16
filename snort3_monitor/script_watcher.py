@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import threading
 import time
 from datetime import datetime
 from json import JSONDecodeError
@@ -30,6 +31,9 @@ class OnMyWatch:
     watch_file: str = '/var/log/snort/alert_json.txt'
     current_position_file: str = 'current_position.txt'
 
+    def __init__(self):
+        self.lock = threading.Lock()
+
     def run(self):
         logger.info('Running.')
         try:
@@ -45,13 +49,14 @@ class OnMyWatch:
     def read_data(self):
         """Open file and read data if changes are detected."""
         try:
-            with open(self.watch_file, encoding='latin-1') as file:
-                file.seek(self.get_current_position())
-                new_data = file.readlines()
-                self.save_current_position(file.tell())
+            with self.lock:
+                with open(self.watch_file, encoding='latin-1') as file:
+                    file.seek(self.get_current_position())
+                    new_data = file.readlines()
+                    self.save_current_position(file.tell())
 
-            if new_data:
-                self.save_data(new_data)
+                if new_data:
+                    self.save_data(new_data)
 
         except PermissionError:
             logger.error(f'Set up permissions for {self.watch_file}!')
@@ -75,6 +80,7 @@ class OnMyWatch:
                 new_event.rule = rule
                 new_event.timestamp = timestamp
                 new_event.save()
+
             except KeyError:
                 logger.error(f'Event has no full required information: {line}')
             except Http404:

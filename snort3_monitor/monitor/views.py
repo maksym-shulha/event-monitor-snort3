@@ -52,7 +52,7 @@ class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
                 params.pop('page')
 
             queryset = queryset.filter(**params)
-        return queryset
+        return queryset.order_by('id')
 
     def patch(self, request, *args, **kwargs) -> Response:
         queryset = self.get_queryset()
@@ -86,7 +86,7 @@ class RequestList(generics.ListAPIView):
             raise ValidationError({"error": "The range has to be less than a week"})
 
         queryset = queryset.filter(timestamp__gte=period_start, timestamp__lte=period_stop)
-        return queryset
+        return queryset.order_by('id')
 
     @staticmethod
     def validate_date(date: str) -> datetime:
@@ -197,7 +197,6 @@ class RuleListView(generics.ListAPIView):
             queryset = queryset.filter(rev=rev)
         if gid:
             queryset = queryset.filter(gid=gid)
-
         return queryset.order_by('sid', 'gid', 'rev')
 
 
