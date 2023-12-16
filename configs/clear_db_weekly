@@ -1,0 +1,1 @@
+0 0 * * 1 python3 /root/snort/snort3_monitor/script_clear_database.py

@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 from django.db.models import Count, Value
 from django.db.models.functions import Concat
-from django.http import HttpResponseNotFound
 from django.db.models import F
 from django.db.models.query import QuerySet
 from django.utils.timezone import make_aware, utc
@@ -188,10 +187,7 @@ class RuleCreate(APIView):
 
 
 def error404(request, exception):
-    """Default 404 response
-
-    need DEBUG=False
-    """
+    """Default 404 response"""
     return Response({"error": "The request is malformed or invalid."}, status=status.HTTP_404_NOT_FOUND)
 
 
