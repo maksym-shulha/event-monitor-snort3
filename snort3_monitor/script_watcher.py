@@ -24,17 +24,21 @@ logger.addHandler(handler)
 
 
 class OnMyWatch:
-    """
-    Responsible to check log file for changes. You can define
-    watch file and file for saving current position.
+    """Watch into directory with logs
+
+    Responsible to check log file for changes.
+    watch_file -- location of log file
+    current_position_file -- name of file with current position
     """
     watch_file: str = '/var/log/snort/alert_json.txt'
     current_position_file: str = 'current_position.txt'
 
     def __init__(self):
+        """Create Lock for instance"""
         self.lock = threading.Lock()
 
     def run(self):
+        """Start watch in log file"""
         logger.info('Running.')
         try:
             while True:
@@ -47,7 +51,7 @@ class OnMyWatch:
             logger.info('Stopped.')
 
     def read_data(self):
-        """Open file and read data if changes are detected."""
+        """Open file and read data"""
         try:
             with self.lock:
                 with open(self.watch_file, encoding='latin-1') as file:
@@ -63,7 +67,7 @@ class OnMyWatch:
 
     @staticmethod
     def save_data(data: list):
-        """Saving data into data base"""
+        """Save data into database"""
         for line in data:
             try:
                 event_data = json.loads(line)

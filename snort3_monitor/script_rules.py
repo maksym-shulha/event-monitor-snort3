@@ -20,9 +20,15 @@ logger.addHandler(handler)
 
 
 def update_pulled_pork(file: str) -> int:
-    """
-    Update rules from pulledpork3 and dump them into a file and
-    get data from file in current directory and return count of new added rules
+    """Update Snort3 rules
+
+    Update rules from using PulledPork3 and dump them into a file,
+    get data from file in current directory and add them to a
+    database if these rules are not exist. Reload Snort3 when
+    update ends.
+
+    :param file: Name of file with rules
+    :return: Count of new rules
     """
     # updating rules
     exit_code = os.system("/usr/local/bin/pulledpork3/pulledpork.py -c /usr/local/etc/pulledpork3/pulledpork.conf")
