@@ -15,8 +15,8 @@ class Event(models.Model):
 
 class Rule(models.Model):
     sid = models.IntegerField()
-    rev = models.IntegerField()
     gid = models.IntegerField()
+    rev = models.IntegerField()
     action = models.CharField(max_length=50)
     message = models.TextField()
     data_json = models.JSONField()

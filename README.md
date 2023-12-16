@@ -22,5 +22,5 @@ Notice, that we have 3 processes: **server**, **snort** and **watcher**.
 3. Up docker compose.
 4. Open bash in snort container, stop **snort** process and run it:
 ```
-snort -c /usr/local/etc/snort/snort.lua -r /root/snort/test.pcap -k none -l /var/log/snort
+snort -c /usr/local/etc/snort/snort.lua -r /root/snort/test.pcap -k none -l /var/log/snort --tweaks custom
 ```

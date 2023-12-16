@@ -1,3 +1,5 @@
+import logging
+import threading
 from datetime import datetime, timedelta
 
 from django.db.models import Count, Value
@@ -15,6 +17,14 @@ from script_rules import update_pulled_pork
 from .models import Event, Request, Rule
 from .serializers import EventSerializer, EventCountAddressSerializer, \
     EventCountRuleSerializer, RequestSerializer, RuleSerializer
+
+
+logger = logging.getLogger('API')
+formatter = logging.Formatter('%(name)s -> %(levelname)s : %(message)s')
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
@@ -42,12 +52,12 @@ class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
                 params.pop('page')
 
             queryset = queryset.filter(**params)
-        return queryset
+        return queryset.order_by('id')
 
-    def patch(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs) -> Response:
         queryset = self.get_queryset()
         queryset.update(mark_as_deleted=True)
-        return Response({"message": "All events are marked as deleted."})
+        return Response({"message": "All events are marked as deleted."}, status=status.HTTP_200_OK)
 
 
 class RequestList(generics.ListAPIView):
@@ -76,10 +86,10 @@ class RequestList(generics.ListAPIView):
             raise ValidationError({"error": "The range has to be less than a week"})
 
         queryset = queryset.filter(timestamp__gte=period_start, timestamp__lte=period_stop)
-        return queryset
+        return queryset.order_by('id')
 
     @staticmethod
-    def validate_date(date):
+    def validate_date(date: str) -> datetime:
         """Validating date format"""
         formats = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%d"]
         for frmt in formats:
@@ -95,7 +105,7 @@ class EventCountList(generics.ListAPIView):
     queryset = Event.objects.filter(mark_as_deleted=False)
 
     def get_queryset(self) -> QuerySet:
-        queryset = super().get_queryset()
+        queryset = Event.objects.all()
         periods = {
             'all': None,
             'day': timedelta(days=1),
@@ -130,7 +140,6 @@ class EventCountList(generics.ListAPIView):
                 .annotate(addr_pair=Concat('src_addr', Value('/'), 'dst_addr'))
                 .values('addr_pair')
                 .annotate(count=Count('addr_pair'))
-                .order_by('count')
             )
         elif params.get('type') == 'sid':
             EventCountList.serializer_class = EventCountRuleSerializer
@@ -138,24 +147,26 @@ class EventCountList(generics.ListAPIView):
                 queryset
                 .values(sid=F('rule__sid'))
                 .annotate(count=Count('rule__sid'))
-                .order_by('count')
             )
         else:
             raise ValidationError(
                 {"error": "Unknown 'type', use 'sid' or 'addr'"})
 
-        return queryset
+        return queryset.order_by('count')
 
 
 class RuleCreate(APIView):
-    def post(self, request, *args, **kwargs) -> Response:
-        """POST method, but uses script for checking changes in pulledpork3 rules"""
+    @staticmethod
+    def background_update():
         try:
             count = update_pulled_pork('rules.txt')
+            logger.info(f"{count} new rules have been added.")
         except RuntimeError as e:
-            return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)
+            logger.error(e)
 
-        return Response({'message': f'{count} rules has been added'}, status=status.HTTP_201_CREATED)
+    def post(self, request, *args, **kwargs) -> Response:
+        threading.Thread(target=self.background_update).start()
+        return Response({'message': 'Update process started.'}, status=status.HTTP_202_ACCEPTED)
 
 
 def error404(request, exception):
@@ -170,12 +181,13 @@ class RuleListView(generics.ListAPIView):
     queryset = Rule.objects.all()
     serializer_class = RuleSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         queryset = Rule.objects.all()
 
         allowed_params = ['sid', 'rev', 'gid']
         params = [key for key in self.request.query_params]
         validate_params(params, allowed_params)
+
         sid = self.request.query_params.get('sid', None)
         rev = self.request.query_params.get('rev', None)
         gid = self.request.query_params.get('gid', None)
@@ -185,7 +197,7 @@ class RuleListView(generics.ListAPIView):
             queryset = queryset.filter(rev=rev)
         if gid:
             queryset = queryset.filter(gid=gid)
-        return queryset.order_by('sid', 'rev', 'gid')
+        return queryset.order_by('sid', 'gid', 'rev')
 
 
 def validate_params(entered, allowed: list) -> None:
