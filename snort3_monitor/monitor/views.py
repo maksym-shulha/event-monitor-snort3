@@ -32,6 +32,10 @@ class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
     serializer_class = EventSerializer
 
     def get_queryset(self) -> QuerySet:
+        """Perform filtering and ordering data
+
+        Client can use only allowed_params in query.
+        """
         allowed_params = ['src_addr', 'src_port', 'dst_addr', 'dst_port', 'sid', 'proto']
         queryset = super().get_queryset()
 
@@ -55,6 +59,7 @@ class EventListUpdate(generics.UpdateAPIView, generics.ListAPIView):
         return queryset.order_by('id')
 
     def patch(self, request, *args, **kwargs) -> Response:
+        """Mark all events as deleted to ide them"""
         queryset = self.get_queryset()
         queryset.update(mark_as_deleted=True)
         return Response({"message": "All events are marked as deleted."}, status=status.HTTP_200_OK)
@@ -65,6 +70,10 @@ class RequestList(generics.ListAPIView):
     serializer_class = RequestSerializer
 
     def get_queryset(self) -> QuerySet:
+        """Perform filtering and ordering data
+
+        Client can use only allowed_params in query.
+        """
         queryset = super().get_queryset()
 
         allowed_params = ['period_start', 'period_stop']
@@ -90,7 +99,10 @@ class RequestList(generics.ListAPIView):
 
     @staticmethod
     def validate_date(date: str) -> datetime:
-        """Validating date format"""
+        """Validate date format
+
+        Only formats(list) are allowed in query.
+        """
         formats = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", "%Y-%m-%d"]
         for frmt in formats:
             try:
@@ -105,6 +117,10 @@ class EventCountList(generics.ListAPIView):
     queryset = Event.objects.filter(mark_as_deleted=False)
 
     def get_queryset(self) -> QuerySet:
+        """Perform filtering and ordering data
+
+        Client can use only allowed_params in query.
+        """
         queryset = Event.objects.all()
         periods = {
             'all': None,
@@ -158,6 +174,7 @@ class EventCountList(generics.ListAPIView):
 class RuleCreate(APIView):
     @staticmethod
     def background_update():
+        """Perform background updating of rules"""
         try:
             count = update_pulled_pork('rules.txt')
             logger.info(f"{count} new rules have been added.")
@@ -165,16 +182,17 @@ class RuleCreate(APIView):
             logger.error(e)
 
     def post(self, request, *args, **kwargs) -> Response:
+        """Start rules updating and send immediate response"""
         threading.Thread(target=self.background_update).start()
         return Response({'message': 'Update process started.'}, status=status.HTTP_202_ACCEPTED)
 
 
 def error404(request, exception):
-    """
-    default 404 response
+    """Default 404 response
+
     need DEBUG=False
     """
-    return HttpResponseNotFound('{"error": "The request is malformed or invalid."}')
+    return Response({"error": "The request is malformed or invalid."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class RuleListView(generics.ListAPIView):
@@ -182,6 +200,10 @@ class RuleListView(generics.ListAPIView):
     serializer_class = RuleSerializer
 
     def get_queryset(self) -> QuerySet:
+        """Perform filtering and ordering data
+
+        Client can use only allowed_params in query.
+        """
         queryset = Rule.objects.all()
 
         allowed_params = ['sid', 'rev', 'gid']
@@ -201,11 +223,12 @@ class RuleListView(generics.ListAPIView):
 
 
 def validate_params(entered, allowed: list) -> None:
-    """
-    validate query parameters
+    """Validate query parameters
+
+    :param entered: Params of query, which user entered
+    :param allowed: Params that are allowed in endpoint
     """
     allowed.append('page')
-
     only_allowed_params_present = set(entered).issubset(set(allowed))
     if not only_allowed_params_present:
         raise ValidationError(
