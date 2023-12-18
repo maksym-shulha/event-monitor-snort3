@@ -1,12 +1,6 @@
 from rest_framework import serializers
 
-from .models import Event, Rule, Request
-
-
-class RuleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Rule
-        fields = ('sid', 'rev', 'gid', 'action', 'message')
+from .models import Event, Request
 
 
 class RequestSerializer(serializers.ModelSerializer):

@@ -1,5 +1,4 @@
 import logging
-import threading
 from datetime import datetime, timedelta
 
 from django.db.models import Count, Value
@@ -10,15 +9,12 @@ from django.utils.timezone import make_aware, utc
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from script_rules import update_pulled_pork
-from .models import Event, Request, Rule
-from .serializers import EventSerializer, EventCountAddressSerializer, \
-    EventCountRuleSerializer, RequestSerializer, RuleSerializer
+from .models import Event, Request
+from .serializers import EventSerializer, EventCountAddressSerializer, EventCountRuleSerializer, RequestSerializer
 
 
-logger = logging.getLogger('API')
+logger = logging.getLogger('monitor')
 formatter = logging.Formatter('%(name)s -> %(levelname)s : %(message)s')
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
@@ -170,52 +166,9 @@ class EventCountList(generics.ListAPIView):
         return queryset.order_by('count')
 
 
-class RuleCreate(APIView):
-    @staticmethod
-    def background_update():
-        """Perform background updating of rules"""
-        try:
-            count = update_pulled_pork('rules.txt')
-            logger.info(f"{count} new rules have been added.")
-        except RuntimeError as e:
-            logger.error(e)
-
-    def post(self, request, *args, **kwargs) -> Response:
-        """Start rules updating and send immediate response"""
-        threading.Thread(target=self.background_update).start()
-        return Response({'message': 'Update process started.'}, status=status.HTTP_202_ACCEPTED)
-
-
 def error404(request, exception):
     """Default 404 response"""
     return Response({"error": "The request is malformed or invalid."}, status=status.HTTP_404_NOT_FOUND)
-
-
-class RuleListView(generics.ListAPIView):
-    queryset = Rule.objects.all()
-    serializer_class = RuleSerializer
-
-    def get_queryset(self) -> QuerySet:
-        """Perform filtering and ordering data
-
-        Client can use only allowed_params in query.
-        """
-        queryset = Rule.objects.all()
-
-        allowed_params = ['sid', 'rev', 'gid']
-        params = [key for key in self.request.query_params]
-        validate_params(params, allowed_params)
-
-        sid = self.request.query_params.get('sid', None)
-        rev = self.request.query_params.get('rev', None)
-        gid = self.request.query_params.get('gid', None)
-        if sid:
-            queryset = queryset.filter(sid=sid)
-        if rev:
-            queryset = queryset.filter(rev=rev)
-        if gid:
-            queryset = queryset.filter(gid=gid)
-        return queryset.order_by('sid', 'gid', 'rev')
 
 
 def validate_params(entered, allowed: list) -> None:
