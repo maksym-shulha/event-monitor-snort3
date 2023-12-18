@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "monitor.apps.MonitorConfig",
     "rule.apps.RuleConfig",
+    "request_log.apps.RequestLogConfig",
     "rest_framework",
     "corsheaders",
 ]
@@ -51,7 +52,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "monitor.middleware.RequestMiddleware",
+    "request_log.middleware.RequestMiddleware",
     'corsheaders.middleware.CorsMiddleware',
 ]
 
