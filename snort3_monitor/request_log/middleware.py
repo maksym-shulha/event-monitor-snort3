@@ -1,10 +1,8 @@
-from monitor.models import Request
+from request_log.models import Request
 
 
 class RequestMiddleware:
-    """
-    Responsible for logging client's requests to data base
-    """
+    """Responsible for logging client's requests to data base"""
     def __init__(self, get_response):
         self.get_response = get_response
 

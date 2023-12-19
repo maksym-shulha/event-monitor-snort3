@@ -12,7 +12,8 @@ from django.http import Http404
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "snort3_monitor.settings")
 django.setup()
-from monitor.models import Event, Rule
+from monitor.models import Event
+from rule.models import Rule
 
 
 logger = logging.getLogger('events')
