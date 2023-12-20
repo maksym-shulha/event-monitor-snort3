@@ -8,6 +8,11 @@ services:
 #      - ./Thursday-WorkingHours.pcap:/root/snort/test.pcap
     depends_on:
       - db
+  front:
+    build: snort-front
+    container_name: front
+    ports:
+      - "80:80"
   db:
     image: postgres:14
     environment:

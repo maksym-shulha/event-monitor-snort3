@@ -43,5 +43,5 @@ Notice, that we have 4 processes:
 3. Up docker compose.
 4. Open bash in snort container, stop **snort** process and run it:
 ```
-snort -c /usr/local/etc/snort/snort.lua -r /root/snort/test.pcap -k none -l /var/log/snort --tweaks custom
+snort -c /usr/local/etc/snort/snort.lua -r /root/snort/test.pcap --plugin-path=/usr/local/etc/so_rules/ -k none -l /var/log/snort --tweaks custom
 ```
