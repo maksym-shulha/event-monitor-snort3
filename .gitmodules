@@ -1,0 +1,3 @@
+[submodule "snort-front"]
+	path = snort-front
+	url = https://github.com/LLkaia/snort-front.git
