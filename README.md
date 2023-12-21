@@ -1,4 +1,8 @@
-# Event Monitor: Snort3 with Django Rest Framework (DRF)
+# Event Monitor
+- Snort3 IPS/IDS
+- Django Rest Framework
+- Angular
+- PostgreSQL
 
 ## Quick Start
 
@@ -7,16 +11,18 @@
 Clone the repository to your local machine:
 
 ```
-git clone https://github.com/LLkaia/event-monitor-snort3.git
+git clone --recurse-submodules https://github.com/LLkaia/event-monitor-snort3.git
 cd event-monitor-snort3
 ```
 
 ### Run the Docker Compose
-To run the Snort3 event monitor along with the Django Rest Framework (DRF) server and PostgreSQL, execute the following command:
 
-```docker compose up```
+`docker compose up`
 
+### Open user interface:
+`localhost:80`
 ### Check openapi.yml for RESTAPI documentation
+API is available on `localhost:8000`
 ##
 ## Managing Daemons
 To control daemons within the Snort container, open another bash window:
@@ -43,5 +49,5 @@ Notice, that we have 4 processes:
 3. Up docker compose.
 4. Open bash in snort container, stop **snort** process and run it:
 ```
-snort -c /usr/local/etc/snort/snort.lua -r /root/snort/test.pcap -k none -l /var/log/snort --tweaks custom
+snort -c /usr/local/etc/snort/snort.lua -r /root/snort/test.pcap --plugin-path=/usr/local/etc/so_rules/ -k none -l /var/log/snort --tweaks custom
 ```

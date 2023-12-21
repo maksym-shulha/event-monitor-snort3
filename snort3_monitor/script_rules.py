@@ -36,7 +36,8 @@ def update_pulled_pork(file: str) -> int:
         raise RuntimeError('Update PulledPork was not executed.')
     # dump rules
     exit_code = os.system(
-        f"snort -c /usr/local/etc/snort/snort.lua --dump-rule-meta --tweaks custom > {file}")
+        f"snort -c /usr/local/etc/snort/snort.lua "
+        f"--plugin-path=/usr/local/etc/so_rules/ --dump-rule-meta --tweaks custom > {file}")
     if exit_code != 0:
         raise RuntimeError('Dump rules into file was not executed.')
 
