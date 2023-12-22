@@ -1,0 +1,133 @@
+[
+{
+  "model": "rule.rule",
+  "pk": 1,
+  "fields": {
+    "sid": 53159,
+    "gid": 1,
+    "rev": 1,
+    "action": "alert",
+    "message": "MALWARE-OTHER Win.Trojan.ObliqueRAT download attempt",
+    "data_json": {
+      "gid": 1,
+      "msg": "MALWARE-OTHER Win.Trojan.ObliqueRAT download attempt",
+      "rev": 1,
+      "sid": 53159,
+      "body": "( msg:\"MALWARE-OTHER Win.Trojan.ObliqueRAT download attempt\"; flow:to_client,established; flowbits:isset,file.exe; file_data; content:\"|5C|Users|5C|Public|5C|Video|5C|lphsi.exe\",fast_pattern,nocase; content:\"|5C|Programs|5C|Startup|5C|script.lnk\",nocase; content:\"ript.lnk\",nocase; content:\"Notepad\",nocase; metadata:impact_flag red,policy balanced-ips drop,policy max-detect-ips drop,policy security-ips drop; service:ftp-data,http,imap,pop3; reference:url,virustotal.com/gui/file/37c7500ed49671fe78bd88afa583bfb59f33d3ee135a577908d633b4e9aa4035; classtype:trojan-activity; sid:53159; rev:1; )",
+      "rule": "alert tcp $EXTERNAL_NET $FILE_DATA_PORTS -> $HOME_NET any ( msg:\"MALWARE-OTHER Win.Trojan.ObliqueRAT download attempt\"; flow:to_client,established; flowbits:isset,file.exe; file_data; content:\"|5C|Users|5C|Public|5C|Video|5C|lphsi.exe\",fast_pattern,nocase; content:\"|5C|Programs|5C|Startup|5C|script.lnk\",nocase; content:\"ript.lnk\",nocase; content:\"Notepad\",nocase; metadata:impact_flag red,policy balanced-ips drop,policy max-detect-ips drop,policy security-ips drop; service:ftp-data,http,imap,pop3; reference:url,virustotal.com/gui/file/37c7500ed49671fe78bd88afa583bfb59f33d3ee135a577908d633b4e9aa4035; classtype:trojan-activity; sid:53159; rev:1; )",
+      "proto": "tcp",
+      "action": "alert",
+      "checks": [
+        "file.exe"
+      ],
+      "dst_nets": "$HOME_NET",
+      "priority": 1,
+      "services": [
+        "ftp-data",
+        "http2",
+        "http",
+        "imap",
+        "pop3"
+      ],
+      "src_nets": "$EXTERNAL_NET",
+      "classtype": "trojan-activity",
+      "direction": "->",
+      "dst_ports": "any",
+      "src_ports": "$FILE_DATA_PORTS",
+      "references": [
+        {
+          "id": "virustotal.com/gui/file/37c7500ed49671fe78bd88afa583bfb59f33d3ee135a577908d633b4e9aa4035",
+          "system": "url"
+        }
+      ]
+    },
+    "deprecated": false
+  }
+},
+{
+  "model": "rule.rule",
+  "pk": 2,
+  "fields": {
+    "sid": 21516,
+    "gid": 1,
+    "rev": 9,
+    "action": "alert",
+    "message": "SERVER-WEBAPP JBoss JMX console access attempt",
+    "data_json": {
+      "gid": 1,
+      "msg": "SERVER-WEBAPP JBoss JMX console access attempt",
+      "rev": 9,
+      "sid": 21516,
+      "body": "( msg:\"SERVER-WEBAPP JBoss JMX console access attempt\"; flow:to_server,established; http_uri; content:\"/jmx-console/\",fast_pattern,nocase; metadata:policy balanced-ips drop,policy max-detect-ips drop,policy security-ips drop; service:http; reference:cve,2007-1036; reference:cve,2013-2185; reference:url,docs.jboss.org/jbossas/6/Admin_Console_Guide/en-US/pdf/Admin_Console_Guide.pdf; classtype:attempted-recon; sid:21516; rev:9; )",
+      "rule": "alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS $HTTP_PORTS ( msg:\"SERVER-WEBAPP JBoss JMX console access attempt\"; flow:to_server,established; http_uri; content:\"/jmx-console/\",fast_pattern,nocase; metadata:policy balanced-ips drop,policy max-detect-ips drop,policy security-ips drop; service:http; reference:cve,2007-1036; reference:cve,2013-2185; reference:url,docs.jboss.org/jbossas/6/Admin_Console_Guide/en-US/pdf/Admin_Console_Guide.pdf; classtype:attempted-recon; sid:21516; rev:9; )",
+      "proto": "tcp",
+      "action": "alert",
+      "dst_nets": "$HTTP_SERVERS",
+      "priority": 2,
+      "services": [
+        "http2",
+        "http"
+      ],
+      "src_nets": "$EXTERNAL_NET",
+      "classtype": "attempted-recon",
+      "direction": "->",
+      "dst_ports": "$HTTP_PORTS",
+      "src_ports": "any",
+      "references": [
+        {
+          "id": "2007-1036",
+          "system": "cve"
+        },
+        {
+          "id": "2013-2185",
+          "system": "cve"
+        },
+        {
+          "id": "docs.jboss.org/jbossas/6/Admin_Console_Guide/en-US/pdf/Admin_Console_Guide.pdf",
+          "system": "url"
+        }
+      ]
+    },
+    "deprecated": false
+  }
+},
+{
+  "model": "rule.rule",
+  "pk": 3,
+  "fields": {
+    "sid": 57239,
+    "gid": 1,
+    "rev": 1,
+    "action": "alert",
+    "message": "MALWARE-CNC Html.Webshell.Hafnium inbound request attempt",
+    "data_json": {
+      "gid": 1,
+      "msg": "MALWARE-CNC Html.Webshell.Hafnium inbound request attempt",
+      "rev": 1,
+      "sid": 57239,
+      "body": "( msg:\"MALWARE-CNC Html.Webshell.Hafnium inbound request attempt\"; flow:to_server,established; http_uri; content:\"/aspnet_client/\",fast_pattern,nocase; content:\".aspx\",nocase; http_client_body; content:\"p=\",nocase; content:\"c=\",nocase; http_uri; pcre:\"/\\x2f(web|help|document|error(EEE?|EW|FF)|healthcheck|aspnet_(www|client|iisstart)|xx|shell|one)\\x2easpx/i\"; metadata:impact_flag red,policy balanced-ips drop,policy max-detect-ips drop,policy security-ips drop; service:http; reference:url,www.microsoft.com/security/blog/2021/03/02/hafnium-targeting-exchange-servers/; classtype:trojan-activity; sid:57239; rev:1; )",
+      "rule": "alert tcp $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS ( msg:\"MALWARE-CNC Html.Webshell.Hafnium inbound request attempt\"; flow:to_server,established; http_uri; content:\"/aspnet_client/\",fast_pattern,nocase; content:\".aspx\",nocase; http_client_body; content:\"p=\",nocase; content:\"c=\",nocase; http_uri; pcre:\"/\\x2f(web|help|document|error(EEE?|EW|FF)|healthcheck|aspnet_(www|client|iisstart)|xx|shell|one)\\x2easpx/i\"; metadata:impact_flag red,policy balanced-ips drop,policy max-detect-ips drop,policy security-ips drop; service:http; reference:url,www.microsoft.com/security/blog/2021/03/02/hafnium-targeting-exchange-servers/; classtype:trojan-activity; sid:57239; rev:1; )",
+      "proto": "tcp",
+      "action": "alert",
+      "dst_nets": "$HOME_NET",
+      "priority": 1,
+      "services": [
+        "http2",
+        "http"
+      ],
+      "src_nets": "$EXTERNAL_NET",
+      "classtype": "trojan-activity",
+      "direction": "->",
+      "dst_ports": "$HTTP_PORTS",
+      "src_ports": "any",
+      "references": [
+        {
+          "id": "www.microsoft.com/security/blog/2021/03/02/hafnium-targeting-exchange-servers/",
+          "system": "url"
+        }
+      ]
+    },
+    "deprecated": false
+  }
+}
+]

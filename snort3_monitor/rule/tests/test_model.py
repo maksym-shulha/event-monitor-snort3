@@ -19,7 +19,7 @@ class RuleModelCreationTests(TestCase):
 
     def test_invalid_alert(self):
         with self.assertRaises(DataError):
-            Rule.objects.create(sid=1, rev=1, gid=2, action="a"*51)
+            Rule.objects.create(sid=1, rev=1, gid=2, action="a" * 51)
 
 
 class RuleModelGeneralTests(TestCase):
@@ -31,14 +31,14 @@ class RuleModelGeneralTests(TestCase):
             "rev": 1,
             "action": "alert",
             "message": "MALWARE-OTHER Win.Trojan.ObliqueRAT download attempt"
-                }
+        }
         rule2 = {
             "gid": 1,
             "sid": 53158,
             "rev": 1,
             "action": "alert",
             "message": "MALWARE-OTHER Win.Trojan.ObliqueRAT download attempt"
-                }
+        }
         cls.rule = Rule.objects.create(**rule1)
         cls.rule_with_event = Rule.objects.create(**rule2)
         cls.event = Event.objects.create(rule=cls.rule_with_event, timestamp=datetime.now())

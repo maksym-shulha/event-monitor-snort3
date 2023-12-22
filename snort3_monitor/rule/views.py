@@ -40,7 +40,7 @@ class RuleListView(generics.ListAPIView):
 
         Client can use only allowed_params in query.
         """
-        queryset = Rule.objects.all()
+        queryset = super().get_queryset()
 
         allowed_params = ['sid', 'rev', 'gid']
         params = [key for key in self.request.query_params]
@@ -58,7 +58,7 @@ class RuleListView(generics.ListAPIView):
         return queryset.order_by('sid', 'gid', 'rev')
 
     @staticmethod
-    def validate_params(entered, allowed: list) -> None:
+    def validate_params(entered: list, allowed: list) -> None:
         """Validate query parameters
 
         :param entered: Params of query, which user entered
