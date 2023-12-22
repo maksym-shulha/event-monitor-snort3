@@ -45,4 +45,3 @@ class RuleCreateViewTests(TestCase):
             self.view.background_update()
             patched_update_pulled_pork.assert_called()
             self.assertIn('Test error', log.output[0])
-

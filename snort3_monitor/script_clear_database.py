@@ -9,12 +9,7 @@ django.setup()
 from monitor.models import Event
 
 
-logger = logging.getLogger('cron')
-formatter = logging.Formatter('%(name)s -> %(levelname)s : %(message)s')
-handler = logging.StreamHandler()
-handler.setLevel(logging.INFO)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logger = logging.getLogger('monitor')
 
 
 if __name__ == '__main__':

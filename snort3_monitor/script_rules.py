@@ -11,12 +11,7 @@ django.setup()
 from rule.models import Rule
 
 
-logger = logging.getLogger('rules')
-formatter = logging.Formatter('%(name)s -> %(levelname)s : %(message)s')
-handler = logging.StreamHandler()
-handler.setLevel(logging.INFO)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logger = logging.getLogger('monitor')
 
 
 def update_pulled_pork(file: str) -> int:
