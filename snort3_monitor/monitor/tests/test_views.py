@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from  monitor.views import validate_params
+from monitor.views import validate_params
 import unittest
 from unittest import mock
 from monitor.views import EventListUpdate
@@ -29,7 +29,7 @@ class EventListUpdateViewTest(TestCase):
             context.exception.message,
             {
                 "error": "Invalid query parameters: invalid_param. "
-                        "Allowed parameters are: src_addr, src_port, dst_addr, dst_port, sid, proto, page."
+                         "Allowed parameters are: src_addr, src_port, dst_addr, dst_port, sid, proto, page."
             }
         )
 
@@ -37,7 +37,7 @@ class EventListUpdateViewTest(TestCase):
         allowed_params = ['src_addr', 'src_port', 'dst_addr', 'dst_port', 'sid', 'proto']
         entered_params = []
 
-        result =  validate_params(entered_params, allowed_params)
+        result = validate_params(entered_params, allowed_params)
         self.assertIsNone(result)
 
     def test_get_queryset_error(self):

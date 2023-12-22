@@ -57,7 +57,7 @@ class EventSerializerTest(TestCase):
 
     def test_invalid_dst_port_validation(self):
         invalid_data = {
-           'dst_port': "invalid_port",
+            'dst_port': "invalid_port",
         }
         serializer = EventSerializer(data=invalid_data)
         self.assertFalse(serializer.is_valid())

@@ -5,6 +5,7 @@ from rule.models import Rule
 import datetime
 from django.core.exceptions import ValidationError
 
+
 class EventModelTest(TestCase):
 
     def setUp(self):
@@ -37,9 +38,9 @@ class EventModelTest(TestCase):
         self.assertEqual(max_lengh, 128)
 
     @unittest.expectedFailure
-    def test_max_lengh_src_addr(self):
-        max_lengh = self.event._meta.get_field('src_addr').max_length
-        self.assertEqual(max_lengh, 125)
+    def test_max_length_src_addr(self):
+        max_length = Event._meta.get_field('src_addr').max_length
+        self.assertEqual(max_length, 125)
 
     def test_dst_port_null_blank(self):
         self.event.dst_port = None
@@ -61,7 +62,7 @@ class EventModelTest(TestCase):
         field_label = self.event._meta.get_field('timestamp').verbose_name
         self.assertEqual(field_label, 'timestamp')
 
-    def test_src_addr_max_length(self):
+    def test_src_length(self):
         event = Event(src_addr="1234567890123456789012345678901234567890")
         self.assertRaises(ValidationError, event.full_clean)
 
