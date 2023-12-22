@@ -4,7 +4,7 @@ from rule.models import Rule
 
 
 class Event(models.Model):
-    rule = models.ForeignKey(Rule, on_delete=models.CASCADE)
+    rule = models.ForeignKey(Rule, on_delete=models.PROTECT)
     timestamp = models.DateTimeField()
     src_addr = models.CharField(max_length=128)
     src_port = models.IntegerField(null=True, blank=True)

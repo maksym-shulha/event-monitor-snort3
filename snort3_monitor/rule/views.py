@@ -12,12 +12,7 @@ from rule.models import Rule
 from script_rules import update_pulled_pork
 
 
-logger = logging.getLogger('rules')
-formatter = logging.Formatter('%(name)s -> %(levelname)s : %(message)s')
-handler = logging.StreamHandler()
-handler.setLevel(logging.INFO)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logger = logging.getLogger('monitor')
 
 
 class RuleCreate(APIView):
