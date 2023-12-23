@@ -16,12 +16,7 @@ from monitor.models import Event
 from rule.models import Rule
 
 
-logger = logging.getLogger('events')
-formatter = logging.Formatter('%(name)s -> %(levelname)s : %(message)s')
-handler = logging.StreamHandler()
-handler.setLevel(logging.INFO)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logger = logging.getLogger('monitor')
 
 
 class OnMyWatch:

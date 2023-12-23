@@ -7,8 +7,9 @@ class Rule(models.Model):
     gid = models.IntegerField()
     rev = models.IntegerField()
     action = models.CharField(max_length=50)
-    message = models.TextField()
-    data_json = models.JSONField()
+    message = models.TextField(null=True, blank=True)
+    data_json = models.JSONField(null=True, blank=True)
+    deprecated = models.BooleanField(default=False)
 
     @staticmethod
     def get_rule(sid: int, rev: int, gid: int) -> 'Rule':
