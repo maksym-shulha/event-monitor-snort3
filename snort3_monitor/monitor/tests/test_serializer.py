@@ -3,7 +3,7 @@ import unittest
 from monitor.models import Event
 from rule.models import Rule
 import datetime
-from monitor.serializers import EventSerializer
+from monitor.serializers import EventSerializer, EventCountAddressSerializer, EventCountRuleSerializer
 
 
 class EventSerializerTest(TestCase):
@@ -84,3 +84,60 @@ class EventSerializerTest(TestCase):
     def test_get_message(self):
         serializer = EventSerializer(instance=self.event)
         self.assertEqual(serializer.get_message(self.event), self.rule.message)
+
+
+class EventCountAddrTest(TestCase):
+
+    def test_valid_data(self):
+        valid_data = {'addr_pair': '192.168.1.1', 'count': 1}
+        serializer = EventCountAddressSerializer(data=valid_data)
+        self.assertTrue(serializer.is_valid())
+
+    def test_missing_addr_pair(self):
+        invalid_data = {'count': 1}
+        serializer = EventCountAddressSerializer(data=invalid_data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('addr_pair', serializer.errors)
+
+    def test_invalid_count(self):
+        invalid_data = {'addr_pair': '192.168.1.1', 'count': 'invalid_count'}
+        serializer = EventCountAddressSerializer(data=invalid_data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('count', serializer.errors)
+
+    def test_max_length_addr_pair(self):
+        valid_data = {'addr_pair': 'a' * 128, 'count': 10}
+        serializer = EventCountAddressSerializer(data=valid_data)
+        self.assertTrue(serializer.is_valid())
+
+    def test_exceed_max_length_addr_pair(self):
+        valid_data = {'addr_pair': 'a' * 129, 'count': 10}
+        serializer = EventCountAddressSerializer(data=valid_data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('addr_pair', serializer.errors)
+
+
+class EventCountRuleTest(TestCase):
+
+    def test_sid_valid_data(self):
+        valid_data = {'sid': 1, 'count': 2}
+        serializer = EventCountRuleSerializer(data=valid_data)
+        self.assertTrue(serializer.is_valid())
+
+    def test_missing_sid(self):
+        invalid_data = {'count': 2}
+        serializer = EventCountRuleSerializer(data=invalid_data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('sid', serializer.errors)
+
+    def test_invalid_data_count(self):
+        invalid_count = {'sid': 1, 'count': 'invalid_data'}
+        serializer = EventCountRuleSerializer(data=invalid_count)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('count', serializer.errors)
+
+    def test_sid_by_int(self):
+        valid_data = {'sid': 1, 'count': 1}
+        serializer = EventCountRuleSerializer(data=valid_data)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(int(serializer.validated_data['sid']), 1)

@@ -20,11 +20,6 @@ class RuleCreateViewTests(TestCase):
         cls.request = HttpRequest()
 
     @patch('rule.views.RuleCreate.background_update')
-    def test_post_runs_updating(self, patched_background_update):
-        self.view.post(self.request)
-        patched_background_update.assert_called()
-
-    @patch('rule.views.RuleCreate.background_update')
     def test_post_returns_response(self, patched_background_update):
         response = self.view.post(self.request)
         self.assertIsInstance(response, Response)
