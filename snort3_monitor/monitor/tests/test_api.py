@@ -173,7 +173,9 @@ class EventAPIListViewTest(APITestCase):
         url = reverse('event-list-update')
         response = self.client.get(url, {'type': 'add', 'period': 'all'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        expected_error = {"error": "You can use only src_addr, src_port, dst_addr, dst_port, sid, proto, page as query filters."}
+        expected_error = {
+            "error": "You can use only src_addr, src_port, dst_addr, dst_port, sid, proto, page as query filters."
+        }
         self.assertEqual(response.data, expected_error)
 
     def test_order_by_count(self):
